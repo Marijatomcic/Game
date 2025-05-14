@@ -156,6 +156,7 @@ def setup_new_country():
     cca2 = entry.get("cca2", "XX")
     language = list(entry.get("languages", {}).values())[0] if entry.get("languages") else "Unknown"
     culture = generate_country_info_with_ai(name)
+
     st.session_state.secret = {
         "name": name, "region": region, "population": classify_population(pop),
         "capital": capital, "coastline": coast, "neighbors": neighbors, "un": un,
@@ -166,12 +167,12 @@ def setup_new_country():
 if st.button("🎮 Start Game") or st.session_state.get("replay_requested", False):
     st.session_state.replay_requested = False
     setup_new_country()
-    st.session_state.attempts = 0
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.previous_hints = []
     st.session_state.game_started = True
     st.success("New country loaded!")
+
 
 # 🔄 Game logic block
 if st.session_state.game_started:
