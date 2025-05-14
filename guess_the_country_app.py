@@ -294,17 +294,16 @@ if not st.session_state.game_started and "secret" in st.session_state:
         st.session_state.leaderboard = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)[:5]
 
 if st.button("🎯 Play Again"):
-    # If player lost (0 points or used all 5 attempts), reset everything
+    # Reset only if game was lost
     if st.session_state.points <= 0 or st.session_state.attempts >= 5:
         st.session_state.points = 100
         st.session_state.attempts = 0
-    # Else: keep both points and attempts for continuity
+    # Otherwise: keep points and attempts
 
     st.session_state.secret = None
     st.session_state.replay_requested = True
     st.session_state.game_started = False
     st.rerun()
-
 
 if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
