@@ -11,6 +11,9 @@ st.set_page_config(page_title="Guess the Country Game", layout="centered")
 # Load API key
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    api_key = st.secrets["OPENAPI_API_KEY"]
+ 
 client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
 model_key = "openai/gpt-4.1-nano"
 
