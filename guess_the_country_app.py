@@ -176,6 +176,12 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
 # 🔄 Game logic block
 if st.session_state.game_started:
 
+# End the game immediately if points are zero or below
+    if st.session_state.points <= 0:
+        st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
+        st.session_state.game_started = False
+        st.stop()
+
     # QUESTION SECTION
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
