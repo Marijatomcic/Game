@@ -232,6 +232,10 @@ if st.session_state.game_started:
             st.session_state.attempts += 1
             st.session_state.points -= 20
 
+            if st.session_state.points <= 0:
+                st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
+                st.session_state.game_started = False
+
             if st.session_state.attempts >= 5:
                 st.error(f"😢 Game Over! The country was **{st.session_state.secret['name']}**")
                 st.session_state.game_started = False
@@ -239,6 +243,8 @@ if st.session_state.game_started:
                 country = st.session_state.secret["name"]
                 used_hints = st.session_state.previous_hints
                 prompt = f"""
+
+            
 Give ONE unique cultural clue about the country '{country}' that matches the difficulty '{difficulty}'.
 
 Pick only from these categories:
