@@ -291,8 +291,22 @@ Warnings:
 if not st.session_state.game_started and "secret" in st.session_state:
     player = st.text_input("🏅 Enter your name for the leaderboard:", key="player_name")
     if st.button("Submit Score") and player:
-        st.session_state.leaderboard.append((player, st.session_state.points))
-        st.session_state.leaderboard = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)[:5]
+        current_score = st.session_state.points
+
+    # Check if player already has an entry and if the new score is better
+    existing = [s for s in st.session_state.leaderboard if s[0] == player]
+    if existing:
+        best_prev = max(s[1] for s in existing)
+        if current_score > best_prev:
+            # Remove old entry and add updated score
+            st.session_state.leaderboard = [s for s in st.session_state.leaderboard if s[0] != player]
+            st.session_state.leaderboard.append((player, current_score))
+    else:
+        st.session_state.leaderboard.append((player, current_score))
+
+    # Sort leaderboard in descending order of score
+    st.session_state.leaderboard = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)[:5]
+
 
 if st.button("🎯 Play Again"):
     # Reset only if game was lost
