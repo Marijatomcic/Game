@@ -183,7 +183,7 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
-    # --- QUESTION SECTION ---
+    # QUESTION SECTION
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -197,17 +197,18 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if "selected_question" not in st.session_state:
-        st.session_state.selected_question = None
+    # Dropdown Fix: remember user's choice
+    if "selected_question" not in st.session_state and available:
+        st.session_state.selected_question = available[0]
 
     if available:
         st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-        if st.button("Submit Question") and st.session_state.selected_question:
-            question = st.session_state.selected_question
-            answer = q_map[question](st.session_state.secret)
-            st.session_state.answers.append((question, answer))
-            st.session_state.asked_questions.append(question)
+        if st.button("Submit Question"):
+            selected = st.session_state.selected_question
+            answer = q_map[selected](st.session_state.secret)
+            st.session_state.answers.append((selected, answer))
+            st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
