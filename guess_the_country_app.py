@@ -199,15 +199,17 @@ if st.session_state.game_started:
     if "selected_question" not in st.session_state:
         st.session_state.selected_question = None
 
+    # Dropdown with stable selection
     st.selectbox("❓ Choose a question:", available, key="selected_question")
 
+    # Process submitted question
     if st.button("Submit Question") and st.session_state.selected_question:
         question = st.session_state.selected_question
         answer = q_map[question](st.session_state.secret)
         st.session_state.answers.append((question, answer))
         st.session_state.asked_questions.append(question)
         st.session_state.points -= 2
-        st.session_state.selected_question = None
+        st.session_state.update({"selected_question": None})  # ✅ Safe reset
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
