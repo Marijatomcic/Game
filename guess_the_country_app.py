@@ -196,24 +196,20 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Initialize selected_question if not already or if no longer valid
+    # Initialize selection only if it doesn't exist yet
     if "selected_question" not in st.session_state or st.session_state.selected_question not in available:
         st.session_state.selected_question = available[0]
 
-    # Let the user choose a question and store the selection
-    st.session_state.selected_question = st.selectbox(
-        "❓ Choose a question:", available, 
-        index=available.index(st.session_state.selected_question)
-    )
+    # Let Streamlit handle selection persistence with key
+    st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-    # Use a flag to track if the button was clicked (survives reruns)
+    # Flag to handle stable button interaction
     if "question_submitted" not in st.session_state:
         st.session_state.question_submitted = False
 
     if st.button("Submit Question"):
         st.session_state.question_submitted = True
 
-    # Handle the logic only if the button was submitted
     if st.session_state.question_submitted:
         selected_question = st.session_state.selected_question
         answer = q_map[selected_question](st.session_state.secret)
