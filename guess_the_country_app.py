@@ -168,7 +168,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-# Game logic
+# 🔄 Game logic
 if st.session_state.game_started:
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
@@ -186,33 +186,20 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Fragen außer Flagge
-    text_questions = [q for q in q_map if q != "What is the flag?" and q not in st.session_state.asked_questions]
+    available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if text_questions:
-        if "selected_question" not in st.session_state or st.session_state.selected_question not in text_questions:
-            st.session_state.selected_question = text_questions[0]
-
+    # ✅ FIXED: This form guarantees the question selection is submitted correctly
+    if available:
         with st.form("question_form"):
-            st.selectbox("❓ Choose a question:", options=text_questions, key="selected_question")
+            selected = st.selectbox("❓ Choose a question:", options=available, key="selected_question")
             submitted = st.form_submit_button("Submit Question")
 
         if submitted:
-            selected = st.session_state.selected_question
             answer = q_map[selected](st.session_state.secret)
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
 
-    # Flaggen-Button
-    if "What is the flag?" not in st.session_state.asked_questions:
-        if st.button("🎌 Show Flag"):
-            answer = q_map["What is the flag?"](st.session_state.secret)
-            st.session_state.answers.append(("What is the flag?", answer))
-            st.session_state.asked_questions.append("What is the flag?")
-            st.session_state.points -= 2
-
-    # Antworten anzeigen
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
         if q == "What is the flag?":
@@ -315,12 +302,13 @@ if st.button("🎯 Play Again"):
     st.session_state.secret = None
     st.session_state.replay_requested = True
     st.session_state.game_started = False
-    st.experimental_rerun()
+    st.rerun()
 
 if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
