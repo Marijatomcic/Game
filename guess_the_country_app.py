@@ -196,14 +196,13 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Initialize selection only if it doesn't exist yet
+    # Nur initial setzen, wenn leer oder unzulässig
     if "selected_question" not in st.session_state or st.session_state.selected_question not in available:
         st.session_state.selected_question = available[0]
 
-    # Let Streamlit handle selection persistence with key
+    # Auswahl anzeigen, NICHT manuell speichern
     st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-    # Flag to handle stable button interaction
     if "question_submitted" not in st.session_state:
         st.session_state.question_submitted = False
 
@@ -211,12 +210,12 @@ if st.session_state.game_started:
         st.session_state.question_submitted = True
 
     if st.session_state.question_submitted:
-        selected_question = st.session_state.selected_question
-        answer = q_map[selected_question](st.session_state.secret)
-        st.session_state.answers.append((selected_question, answer))
-        st.session_state.asked_questions.append(selected_question)
+        selected = st.session_state.selected_question
+        answer = q_map[selected](st.session_state.secret)
+        st.session_state.answers.append((selected, answer))
+        st.session_state.asked_questions.append(selected)
         st.session_state.points -= 2
-        st.session_state.question_submitted = False  # reset flag
+        st.session_state.question_submitted = False  # Reset after use
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
