@@ -183,40 +183,44 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
-# ✅ Only allow question section if game has started
-if st.session_state.game_started:
+# Init needed variables
+if "asked_questions" not in st.session_state:
+    st.session_state.asked_questions = []
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None
 
-    q_map = {
-        "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
-        "Is its population small, medium, or large?": lambda c: c["population"],
-        "Does it have a coastline?": lambda c: "Yes" if c["coastline"] else "No",
-        "Does it have more than 3 neighboring countries?": lambda c: "Yes" if c["neighbors"] > 3 else "No",
-        "Is it a UN member?": lambda c: "Yes" if c["un"] else "No",
-        "What is the country's capital city?": lambda c: c["capital"],
-        "What is the country's FIFA code?": lambda c: c["fifa"],
-        "What is the flag?": lambda c: "Here is the flag:"
-    }
+# Question map
+q_map = {
+    "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
+    "Is its population small, medium, or large?": lambda c: c["population"],
+    "Does it have a coastline?": lambda c: "Yes" if c["coastline"] else "No",
+    "Does it have more than 3 neighboring countries?": lambda c: "Yes" if c["neighbors"] > 3 else "No",
+    "Is it a UN member?": lambda c: "Yes" if c["un"] else "No",
+    "What is the country's capital city?": lambda c: c["capital"],
+    "What is the country's FIFA code?": lambda c: c["fifa"],
+    "What is the flag?": lambda c: "Here is the flag:"
+}
 
-    if "asked_questions" not in st.session_state:
-        st.session_state.asked_questions = []
+# Selectable questions
+available = list(q for q in q_map if q not in st.session_state.asked_questions)
 
-    available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
+# Show dropdown
+selected_question = st.selectbox("❓ Choose a question:", available)
 
-    if not available_questions:
-        st.info("✅ You've asked all available questions.")
-    else:
-        # Selectbox value is stored separately, not in session state
-        selected_question_input = st.selectbox("❓ Choose a question:", available_questions)
+# When clicked, just save the selected question and rerun
+if st.button("Submit Question"):
+    st.session_state.pending_question = selected_question
+    st.experimental_rerun()  # force rerun before list changes
 
-        # When user clicks, we store the selected question and update session state
-        if st.button("Submit Question"):
-            st.session_state.selected_question = selected_question_input
+# On rerun: check if a question is pending, and handle it
+if st.session_state.pending_question:
+    q = st.session_state.pending_question
+    answer = q_map[q](st.session_state.secret)
+    st.session_state.answers.append((q, answer))
+    st.session_state.asked_questions.append(q)
+    st.session_state.points -= 2
+    st.session_state.pending_question = None  # clear
 
-            # Only then we remove it from the list
-            answer = q_map[st.session_state.selected_question](st.session_state.secret)
-            st.session_state.answers.append((st.session_state.selected_question, answer))
-            st.session_state.asked_questions.append(st.session_state.selected_question)
-            st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
