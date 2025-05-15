@@ -188,17 +188,22 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # 🧠 Fix: Use session state to preserve selection and allow any question anytime
+    if "selected_question" not in st.session_state:
+        st.session_state.selected_question = available[0] if available else None
+    elif st.session_state.selected_question not in available:
+        st.session_state.selected_question = available[0] if available else None
+
     if available:
         with st.form("question_form"):
             selected = st.selectbox(
                 "❓ Choose a question:",
                 options=available,
-                key="selected_question"
+                index=available.index(st.session_state.selected_question) if st.session_state.selected_question in available else 0
             )
             submitted = st.form_submit_button("Submit Question")
 
-        if submitted and selected not in st.session_state.asked_questions:
+        if submitted:
+            st.session_state.selected_question = selected  # Speichere Auswahl!
             answer = q_map[selected](st.session_state.secret)
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
@@ -306,12 +311,13 @@ if st.button("🎯 Play Again"):
     st.session_state.secret = None
     st.session_state.replay_requested = True
     st.session_state.game_started = False
-    st.rerun()
+    st.experimental_rerun()
 
 if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
     
