@@ -43,7 +43,7 @@ def set_background(image_file):
     st.markdown(css, unsafe_allow_html=True)
 set_background("background.png")
 
-# Custom styling
+# Styling
 st.markdown("""
     <style>
     .custom-answer-box {
@@ -101,7 +101,7 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
-# Initialize session state
+# Session state init
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -113,7 +113,7 @@ if "game_started" not in st.session_state:
 
 st.markdown("## 🌍 Guess the Country Game")
 
-# Game instructions
+# Instructions
 st.markdown("""
 <div style="
     background-color: #fdf3c3;
@@ -132,8 +132,6 @@ Each round, a secret country is selected and enriched by <strong>AI-generated cu
   <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong></li>
   <li>🧠 Everything adapts to your selected difficulty</li>
 </ul>
-<p>The fewer questions and hints you use, the higher your final score.<br>
-Ready to test your global knowledge — and outsmart the AI?</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -170,7 +168,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-# Main game logic
+# Game logic
 if st.session_state.game_started:
 
     if st.session_state.points <= 0:
@@ -178,7 +176,6 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
-    # Define all question logic
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -191,16 +188,28 @@ if st.session_state.game_started:
     }
 
     all_questions = list(q_map.keys())
-    available = [q for q in all_questions if q not in st.session_state.asked_questions]
+    available_questions = [q for q in all_questions if q not in st.session_state.asked_questions]
 
-    if available:
-        selected_question = st.selectbox("❓ Choose a question:", available, key="selected_question")
+    if "selected_question" not in st.session_state or st.session_state.selected_question not in available_questions:
+        st.session_state.selected_question = available_questions[0] if available_questions else None
+
+    if available_questions:
+        selected_index = available_questions.index(st.session_state.selected_question)
+        selected_question = st.selectbox(
+            "❓ Choose a question:",
+            available_questions,
+            index=selected_index,
+            key="question_dropdown"
+        )
+        st.session_state.selected_question = selected_question
 
         if st.button("Submit Question"):
             answer = q_map[selected_question](st.session_state.secret)
             st.session_state.answers.append((selected_question, answer))
             st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
+            remaining = [q for q in all_questions if q not in st.session_state.asked_questions]
+            st.session_state.selected_question = remaining[0] if remaining else None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -274,7 +283,6 @@ Warnings:
 
     st.markdown(f"🧠 **Guesses left:** {5 - st.session_state.attempts} | 🏆 **Points:** {st.session_state.points}")
 
-# Leaderboard + replay
 if not st.session_state.game_started and "secret" in st.session_state:
     player = st.text_input("🏅 Enter your name for the leaderboard:", key="player_name")
     if st.button("Submit Score") and player:
@@ -302,6 +310,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
