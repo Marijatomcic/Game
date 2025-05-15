@@ -111,9 +111,6 @@ if "game_started" not in st.session_state:
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
-    st.session_state.pending_question = None
-    st.session_state.selected_question = None  # ✅ Add this here
-
 
 st.markdown("## 🌍 Guess the Country Game")
 
@@ -177,14 +174,16 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.success("New country loaded!")
 
 
-# Game logic block
+# 🔄 Game logic block
 if st.session_state.game_started:
 
+# End the game immediately if points are zero or below
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
         st.stop()
 
+    # QUESTION SECTION
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -197,24 +196,13 @@ if st.session_state.game_started:
     }
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
-
-    if st.session_state.selected_question not in available:
-        st.session_state.selected_question = available[0] if available else None
-
-    selected_question = st.selectbox("❓ Choose a question:", available, index=available.index(st.session_state.selected_question))
-
-    if st.button("Submit Question"):
-        st.session_state.pending_question = selected_question
-        st.session_state.selected_question = selected_question
-        st.experimental_rerun()
-
-    if st.session_state.pending_question:
-        q = st.session_state.pending_question
-        answer = q_map[q](st.session_state.secret)
-        st.session_state.answers.append((q, answer))
-        st.session_state.asked_questions.append(q)
-        st.session_state.points -= 2
-        st.session_state.pending_question = None
+    if available:
+        question = st.selectbox("❓ Choose a question:", available)
+        if st.button("Submit Question"):
+            answer = q_map[question](st.session_state.secret)
+            st.session_state.answers.append((question, answer))
+            st.session_state.asked_questions.append(question)
+            st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
