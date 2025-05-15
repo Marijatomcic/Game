@@ -176,7 +176,6 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
 # 🔄 Game logic block
 if st.session_state.game_started:
 
-    # End game if points are gone
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
@@ -196,15 +195,28 @@ if st.session_state.game_started:
 
     available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Only show dropdown if there are unasked questions
+    # Keep selected index across reruns
+    if "selected_question_index" not in st.session_state:
+        st.session_state.selected_question_index = 0
+
     if available_questions:
-        selected_question = st.selectbox("❓ Choose a question:", available_questions, key="selected_question")
+        selected_index = st.selectbox(
+            "❓ Choose a question:",
+            range(len(available_questions)),
+            format_func=lambda i: available_questions[i],
+            index=st.session_state.selected_question_index,
+            key="question_selector"
+        )
+        selected_question = available_questions[selected_index]
+        st.session_state.selected_question_index = selected_index
 
         if st.button("Submit Question"):
             answer = q_map[selected_question](st.session_state.secret)
             st.session_state.answers.append((selected_question, answer))
             st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
+            st.session_state.selected_question_index = 0  # reset for next round
+
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
