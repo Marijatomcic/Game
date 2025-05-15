@@ -60,17 +60,15 @@ st.markdown("""
         font-size: 1.05em;
         color: #333;
     }
-    .stSelectbox > div > div {
-        background-color: #e4cdb3 !important;
-        border-radius: 8px;
-    }
     .stButton > button {
         background-color: #3f3f3f;
         color: white;
-        padding: 0.8em 2em;
-        font-size: 1.1em;
+        padding: 0.6em 1.5em;
+        font-size: 1.05em;
         border-radius: 10px;
+        margin: 0.2em 0;
         width: 100%;
+        text-align: left;
     }
     input[type="text"] {
         background-color: #2f3b47 !important;
@@ -125,13 +123,13 @@ st.markdown("""
 Each round, a secret country is selected and enriched by <strong>AI-generated cultural insights</strong>.</p>
 <ul>
   <li>🔍 Ask up to <strong>8 predefined questions</strong>, all answered intelligently by AI</li>
-  <li>🎌 One reveals the country's flag (via AI logic)</li>
-  <li>❌ Every time you guess wrong, AI gives you a new cultural hint</li>
-  <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong> — all AI-generated</li>
-  <li>🧠 Everything adapts to your selected difficulty</li>
+  <li>🎌 One reveals the country's flag</li>
+  <li>❌ Every wrong guess gives you a new cultural hint</li>
+  <li>🍽️ Hints include iconic foods, landmarks, or festivals — AI-generated</li>
+  <li>🧠 Difficulty adapts the hints</li>
 </ul>
-<p>The fewer questions and hints you use, the higher your final score.<br>
-Ready to test your global knowledge — and outsmart the AI?</p>
+<p>The fewer questions and hints you use, the higher your score.<br>
+Ready to test your knowledge and outsmart the AI?</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -153,9 +151,16 @@ def setup_new_country():
     culture = generate_country_info_with_ai(name)
 
     st.session_state.secret = {
-        "name": name, "region": region, "population": classify_population(pop),
-        "capital": capital, "coastline": coast, "neighbors": neighbors, "un": un,
-        "language": language, "fifa": fifa, "cca2": cca2,
+        "name": name,
+        "region": region,
+        "population": classify_population(pop),
+        "capital": capital,
+        "coastline": coast,
+        "neighbors": neighbors,
+        "un": un,
+        "language": language,
+        "fifa": fifa,
+        "cca2": cca2,
         **culture
     }
 
@@ -165,10 +170,11 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.previous_hints = []
+    st.session_state.points = 100
+    st.session_state.attempts = 0
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-# Game logic
 if st.session_state.game_started:
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
@@ -186,32 +192,16 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Nur Fragen ohne Flagge für Dropdown
-    text_questions = [q for q in q_map if q != "What is the flag?" and q not in st.session_state.asked_questions]
+    available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Hier wird selected_question validiert und ggf. gesetzt, damit kein Springen passiert
-    if text_questions:
-        if "selected_question" not in st.session_state or st.session_state.selected_question not in text_questions:
-            st.session_state.selected_question = text_questions[0]
-
-        with st.form("question_form"):
-            st.selectbox("❓ Choose a question:", options=text_questions, key="selected_question")
-            submitted = st.form_submit_button("Submit Question")
-
-        if submitted:
-            selected = st.session_state.selected_question
-            answer = q_map[selected](st.session_state.secret)
-            st.session_state.answers.append((selected, answer))
-            st.session_state.asked_questions.append(selected)
+    # Fragen als Buttons anzeigen
+    for question in available_questions:
+        if st.button(question):
+            answer = q_map[question](st.session_state.secret)
+            st.session_state.answers.append((question, answer))
+            st.session_state.asked_questions.append(question)
             st.session_state.points -= 2
-
-    # Separater Button für die Flagge
-    if "What is the flag?" not in st.session_state.asked_questions:
-        if st.button("🎌 Show Flag"):
-            answer = q_map["What is the flag?"](st.session_state.secret)
-            st.session_state.answers.append(("What is the flag?", answer))
-            st.session_state.asked_questions.append("What is the flag?")
-            st.session_state.points -= 2
+            st.experimental_rerun()  # neu laden, damit Button verschwindet
 
     # Antworten anzeigen
     for q, a in st.session_state.answers:
@@ -220,6 +210,7 @@ if st.session_state.game_started:
             code = st.session_state.secret.get("cca2", "XX")
             st.image(f"https://flagsapi.com/{code}/flat/64.png", width=100)
 
+    # Rate-Eingabe
     st.markdown("🎯 **Your Guess:**")
     guess = st.text_input("Enter your country guess")
     if st.button("Submit Guess"):
@@ -322,6 +313,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
