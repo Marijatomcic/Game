@@ -67,13 +67,10 @@ st.markdown("""
     .stButton > button {
         background-color: #3f3f3f;
         color: white;
-        padding: 0.6em 1.5em;
-        font-size: 1.05em;
+        padding: 0.8em 2em;
+        font-size: 1.1em;
         border-radius: 10px;
         width: 100%;
-        text-align: left;
-        margin-top: 0.25em;
-        margin-bottom: 0.25em;
     }
     input[type="text"] {
         background-color: #2f3b47 !important;
@@ -81,8 +78,10 @@ st.markdown("""
         border-radius: 8px;
         padding: 0.5em;
     }
+
     </style>
 """, unsafe_allow_html=True)
+
 
 def classify_population(pop):
     if pop < 1_000_000: return "small"
@@ -103,6 +102,7 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
+# Init game state
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -111,10 +111,10 @@ if "game_started" not in st.session_state:
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
-    st.session_state.selected_question = None
 
 st.markdown("## 🌍 Guess the Country Game")
 
+# ✅ Custom pastel yellow instruction box
 st.markdown("""
 <div style="
     background-color: #fdf3c3;
@@ -126,15 +126,17 @@ st.markdown("""
 <h4>🧠 Game Instructions — powered by AI</h4>
 <p>Welcome to <strong>Guess the Country!</strong> 🌍<br>
 Each round, a secret country is selected and enriched by <strong>AI-generated cultural insights</strong>.</p>
+
 <ul>
   <li>🔍 Ask up to <strong>8 predefined questions</strong>, all answered intelligently by AI</li>
-  <li>🎌 One reveals the country's flag</li>
-  <li>❌ Every wrong guess gives you a new cultural hint</li>
-  <li>🍽️ Hints include iconic foods, landmarks, or festivals — AI-generated</li>
-  <li>🧠 Difficulty adapts the hints</li>
+  <li>🎌 One reveals the country's flag (via AI logic)</li>
+  <li>❌ Every time you guess wrong, AI gives you a new cultural hint</li>
+  <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong> — all AI-generated</li>
+  <li>🧠 Everything adapts to your selected difficulty</li>
 </ul>
-<p>The fewer questions and hints you use, the higher your score.<br>
-Ready to test your knowledge and outsmart the AI?</p>
+
+<p>The fewer questions and hints you use, the higher your final score.<br>
+Ready to test your global knowledge — and outsmart the AI?</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -156,16 +158,9 @@ def setup_new_country():
     culture = generate_country_info_with_ai(name)
 
     st.session_state.secret = {
-        "name": name,
-        "region": region,
-        "population": classify_population(pop),
-        "capital": capital,
-        "coastline": coast,
-        "neighbors": neighbors,
-        "un": un,
-        "language": language,
-        "fifa": fifa,
-        "cca2": cca2,
+        "name": name, "region": region, "population": classify_population(pop),
+        "capital": capital, "coastline": coast, "neighbors": neighbors, "un": un,
+        "language": language, "fifa": fifa, "cca2": cca2,
         **culture
     }
 
@@ -175,18 +170,18 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.previous_hints = []
-    st.session_state.points = 100
-    st.session_state.attempts = 0
-    st.session_state.selected_question = None
     st.session_state.game_started = True
     st.success("New country loaded!")
 
+# 🔄 Game logic block
 if st.session_state.game_started:
+
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
         st.stop()
 
+    # QUESTION SECTION
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -198,35 +193,27 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
+    available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Reset selected_question if invalid
-    if st.session_state.selected_question not in available_questions:
-        st.session_state.selected_question = available_questions[0] if available_questions else ""
+    if "selected_question" not in st.session_state:
+        st.session_state.selected_question = available[0] if available else None
 
-    if available_questions:
-        selected = st.selectbox(
+    if available:
+        st.session_state.selected_question = st.selectbox(
             "❓ Choose a question:",
-            options=available_questions,
-            index=available_questions.index(st.session_state.selected_question) if st.session_state.selected_question in available_questions else 0,
-            key="selected_question"
+            available,
+            key="question_selectbox"
         )
-    else:
-        st.info("All questions asked!")
-        selected = None
 
-    if st.button("Submit Question") and selected:
-        answer = q_map[selected](st.session_state.secret)
-        st.session_state.answers.append((selected, answer))
-        st.session_state.asked_questions.append(selected)
-        st.session_state.points -= 2
-
-        new_available = [q for q in available_questions if q != selected]
-
-        if len(new_available) > 0:
-            st.session_state.selected_question = new_available[0]
-        else:
-            st.session_state.selected_question = ""
+        if st.button("Submit Question"):
+            selected = st.session_state.selected_question
+            if selected:
+                answer = q_map[selected](st.session_state.secret)
+                st.session_state.answers.append((selected, answer))
+                st.session_state.asked_questions.append(selected)
+                st.session_state.points -= 2
+                remaining = [q for q in available if q != selected]
+                st.session_state.selected_question = remaining[0] if remaining else None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -263,11 +250,7 @@ if st.session_state.game_started:
             st.session_state.attempts += 1
             st.session_state.points -= 20
 
-            if st.session_state.points <= 0:
-                st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
-                st.session_state.game_started = False
-
-            if st.session_state.attempts >= 5:
+            if st.session_state.points <= 0 or st.session_state.attempts >= 5:
                 st.error(f"😢 Game Over! The country was **{st.session_state.secret['name']}**")
                 st.session_state.game_started = False
             else:
@@ -275,17 +258,14 @@ if st.session_state.game_started:
                 used_hints = st.session_state.previous_hints
                 prompt = f"""
 Give ONE unique cultural clue about the country '{country}' that matches the difficulty '{difficulty}'.
-
 Pick only from these categories:
 - Famous foods
 - Major landmarks
 - Cultural festivals
-
 Rules:
 - For 'easy', choose very famous foods or major landmarks; country must have population > 30M
 - For 'medium', pick well-known festivals or traditions; country must have population < 30M
 - For 'hard', give obscure festivals, lesser-known landmarks, or traditional foods; country must have population < 1M
-
 Warnings:
 - Do NOT mention the country name '{country}' or its capital
 - Avoid repeating previous hints: {used_hints}
@@ -308,9 +288,10 @@ Warnings:
 
     st.markdown(f"🧠 **Guesses left:** {5 - st.session_state.attempts} | 🏆 **Points:** {st.session_state.points}")
 
+# Leaderboard + Play Again
 if not st.session_state.game_started and "secret" in st.session_state:
     player = st.text_input("🏅 Enter your name for the leaderboard:", key="player_name")
-
+    
     if st.button("Submit Score") and player:
         current_score = st.session_state.points
         existing = [s for s in st.session_state.leaderboard if s[0] == player]
@@ -321,22 +302,24 @@ if not st.session_state.game_started and "secret" in st.session_state:
                 st.session_state.leaderboard.append((player, current_score))
         else:
             st.session_state.leaderboard.append((player, current_score))
+
         st.session_state.leaderboard = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)[:5]
 
 if st.button("🎯 Play Again"):
     if st.session_state.points <= 0 or st.session_state.attempts >= 5:
         st.session_state.points = 100
         st.session_state.attempts = 0
+
     st.session_state.secret = None
     st.session_state.replay_requested = True
     st.session_state.game_started = False
-    st.session_state.selected_question = None
-    st.experimental_rerun()
+    st.rerun()
 
 if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
