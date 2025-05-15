@@ -181,6 +181,7 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
+    # --- QUESTION SECTION ---
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -192,38 +193,19 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    all_questions = list(q_map.keys())
+    available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if "selected_question" not in st.session_state:
-        st.session_state.selected_question = all_questions[0]
+    if available_questions:
+        selected_question = st.selectbox("❓ Choose a question:", available_questions, key="selected_question")
 
-    # Label asked questions
-    labeled_questions = [
-        f"{q} (already asked)" if q in st.session_state.asked_questions else q
-        for q in all_questions
-    ]
-
-    # Find current index
-    current_index = all_questions.index(st.session_state.selected_question)
-
-    selected_label = st.selectbox(
-        "❓ Choose a question:",
-        labeled_questions,
-        index=current_index
-    )
-
-    # Map back to original question text
-    selected_question = selected_label.replace(" (already asked)", "")
-    st.session_state.selected_question = selected_question
-
-    if st.button("Submit Question"):
-        if selected_question in st.session_state.asked_questions:
-            st.warning("⚠️ You've already asked this question.")
-        else:
+        if st.button("Submit Question"):
             answer = q_map[selected_question](st.session_state.secret)
             st.session_state.answers.append((selected_question, answer))
             st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
+
+            # Clean selected_question so it doesn't cause index issues on next rerun
+            del st.session_state["selected_question"]
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
