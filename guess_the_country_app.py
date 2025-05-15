@@ -195,11 +195,9 @@ if st.session_state.game_started:
             submitted = st.form_submit_button("Submit Question")
 
         if submitted:
-            st.session_state.selected_question = selected 
-            
-            answer = q_map[selected](st.session_state.secret)
-            st.session_state.answers.append((selected, answer))
-            st.session_state.asked_questions.append(selected)
+            answer = q_map[st.session_state.selected_question](st.session_state.secret)
+            st.session_state.answers.append((st.session_state.selected_question, answer))
+            st.session_state.asked_questions.append(st.session_state.selected_question)
             st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
