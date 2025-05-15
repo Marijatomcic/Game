@@ -43,6 +43,7 @@ def set_background(image_file):
     st.markdown(css, unsafe_allow_html=True)
 set_background("background.png")
 
+# Styling
 st.markdown("""
     <style>
     .custom-answer-box {
@@ -81,7 +82,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
 def classify_population(pop):
     if pop < 1_000_000: return "small"
     elif pop < 30_000_000: return "medium"
@@ -101,6 +101,7 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
+# Initialize game state
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -127,7 +128,7 @@ Each round, a secret country is selected and enriched by <strong>AI-generated cu
   <li>🔍 Ask up to <strong>8 predefined questions</strong>, all answered intelligently by AI</li>
   <li>🎌 One reveals the country's flag (via AI logic)</li>
   <li>❌ Every time you guess wrong, AI gives you a new cultural hint</li>
-  <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong> — all AI-generated</li>
+  <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong></li>
   <li>🧠 Everything adapts to your selected difficulty</li>
 </ul>
 <p>The fewer questions and hints you use, the higher your final score.<br>
@@ -168,7 +169,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-# 🔄 Game logic block
+# Main game logic
 if st.session_state.game_started:
 
     if st.session_state.points <= 0:
@@ -190,8 +191,8 @@ if st.session_state.game_started:
     all_questions = list(q_map.keys())
     remaining_questions = [q for q in all_questions if q not in st.session_state.asked_questions]
 
-    if "selected_question" not in st.session_state:
-        st.session_state.selected_question = remaining_questions[0] if remaining_questions else None
+    if "selected_question" not in st.session_state and remaining_questions:
+        st.session_state.selected_question = remaining_questions[0]
 
     if remaining_questions:
         selected_idx = remaining_questions.index(st.session_state.selected_question) if st.session_state.selected_question in remaining_questions else 0
@@ -201,17 +202,18 @@ if st.session_state.game_started:
             index=selected_idx,
             key="question_selectbox"
         )
-        st.session_state.selected_question = selected_question
 
-        if st.button("Submit Question"):
+        if st.button("Submit Question", key=f"submit_{selected_question}"):
+            st.session_state.selected_question = selected_question
             answer = q_map[selected_question](st.session_state.secret)
             st.session_state.answers.append((selected_question, answer))
             st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
-
-            # Update remaining & reset selection
             remaining_questions = [q for q in all_questions if q not in st.session_state.asked_questions]
-            st.session_state.selected_question = remaining_questions[0] if remaining_questions else None
+            if remaining_questions:
+                st.session_state.selected_question = remaining_questions[0]
+            else:
+                st.session_state.selected_question = None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -314,6 +316,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
