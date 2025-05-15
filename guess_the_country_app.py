@@ -173,6 +173,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
+
 # 🔄 Game logic block
 if st.session_state.game_started:
 
@@ -182,7 +183,7 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
-    # QUESTION SECTION with persistent dropdown selection
+    # --- QUESTION SECTION ---
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -199,16 +200,15 @@ if st.session_state.game_started:
     if "selected_question" not in st.session_state:
         st.session_state.selected_question = None
 
-    # Dropdown with stable selection
-    st.selectbox("❓ Choose a question:", available, key="selected_question")
+    if available:
+        st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-    # Process submitted question
-    if st.button("Submit Question") and st.session_state.selected_question:
-        question = st.session_state.selected_question
-        answer = q_map[question](st.session_state.secret)
-        st.session_state.answers.append((question, answer))
-        st.session_state.asked_questions.append(question)
-        st.session_state.points -= 2
+        if st.button("Submit Question") and st.session_state.selected_question:
+            question = st.session_state.selected_question
+            answer = q_map[question](st.session_state.secret)
+            st.session_state.answers.append((question, answer))
+            st.session_state.asked_questions.append(question)
+            st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
