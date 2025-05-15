@@ -43,7 +43,7 @@ def set_background(image_file):
     st.markdown(css, unsafe_allow_html=True)
 set_background("background.png")
 
-# Styling
+# Custom styling
 st.markdown("""
     <style>
     .custom-answer-box {
@@ -101,7 +101,7 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
-# Initialize game state
+# Initialize session state
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -113,6 +113,7 @@ if "game_started" not in st.session_state:
 
 st.markdown("## 🌍 Guess the Country Game")
 
+# Game instructions
 st.markdown("""
 <div style="
     background-color: #fdf3c3;
@@ -177,6 +178,7 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
+    # Define all question logic
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -189,31 +191,16 @@ if st.session_state.game_started:
     }
 
     all_questions = list(q_map.keys())
-    remaining_questions = [q for q in all_questions if q not in st.session_state.asked_questions]
+    available = [q for q in all_questions if q not in st.session_state.asked_questions]
 
-    if "selected_question" not in st.session_state and remaining_questions:
-        st.session_state.selected_question = remaining_questions[0]
+    if available:
+        selected_question = st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-    if remaining_questions:
-        selected_idx = remaining_questions.index(st.session_state.selected_question) if st.session_state.selected_question in remaining_questions else 0
-        selected_question = st.selectbox(
-            "❓ Choose a question:",
-            remaining_questions,
-            index=selected_idx,
-            key="question_selectbox"
-        )
-
-        if st.button("Submit Question", key=f"submit_{selected_question}"):
-            st.session_state.selected_question = selected_question
+        if st.button("Submit Question"):
             answer = q_map[selected_question](st.session_state.secret)
             st.session_state.answers.append((selected_question, answer))
             st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
-            remaining_questions = [q for q in all_questions if q not in st.session_state.asked_questions]
-            if remaining_questions:
-                st.session_state.selected_question = remaining_questions[0]
-            else:
-                st.session_state.selected_question = None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -244,7 +231,6 @@ if st.session_state.game_started:
             """
             st.markdown("### 📚 Country Summary")
             st.markdown(summary, unsafe_allow_html=True)
-
         else:
             st.error("❌ Wrong guess.")
             st.session_state.attempts += 1
@@ -288,6 +274,7 @@ Warnings:
 
     st.markdown(f"🧠 **Guesses left:** {5 - st.session_state.attempts} | 🏆 **Points:** {st.session_state.points}")
 
+# Leaderboard + replay
 if not st.session_state.game_started and "secret" in st.session_state:
     player = st.text_input("🏅 Enter your name for the leaderboard:", key="player_name")
     if st.button("Submit Score") and player:
@@ -300,7 +287,6 @@ if not st.session_state.game_started and "secret" in st.session_state:
                 st.session_state.leaderboard.append((player, current_score))
         else:
             st.session_state.leaderboard.append((player, current_score))
-
         st.session_state.leaderboard = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)[:5]
 
 if st.button("🎯 Play Again"):
@@ -316,6 +302,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
