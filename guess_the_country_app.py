@@ -78,7 +78,6 @@ st.markdown("""
         border-radius: 8px;
         padding: 0.5em;
     }
-
     </style>
 """, unsafe_allow_html=True)
 
@@ -102,7 +101,6 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
-# Init game state
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -114,7 +112,6 @@ if "game_started" not in st.session_state:
 
 st.markdown("## 🌍 Guess the Country Game")
 
-# ✅ Custom pastel yellow instruction box
 st.markdown("""
 <div style="
     background-color: #fdf3c3;
@@ -126,7 +123,6 @@ st.markdown("""
 <h4>🧠 Game Instructions — powered by AI</h4>
 <p>Welcome to <strong>Guess the Country!</strong> 🌍<br>
 Each round, a secret country is selected and enriched by <strong>AI-generated cultural insights</strong>.</p>
-
 <ul>
   <li>🔍 Ask up to <strong>8 predefined questions</strong>, all answered intelligently by AI</li>
   <li>🎌 One reveals the country's flag (via AI logic)</li>
@@ -134,7 +130,6 @@ Each round, a secret country is selected and enriched by <strong>AI-generated cu
   <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong> — all AI-generated</li>
   <li>🧠 Everything adapts to your selected difficulty</li>
 </ul>
-
 <p>The fewer questions and hints you use, the higher your final score.<br>
 Ready to test your global knowledge — and outsmart the AI?</p>
 </div>
@@ -181,7 +176,6 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
-    # QUESTION SECTION
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -193,27 +187,31 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    available = [q for q in q_map if q not in st.session_state.asked_questions]
+    all_questions = list(q_map.keys())
+    remaining_questions = [q for q in all_questions if q not in st.session_state.asked_questions]
 
     if "selected_question" not in st.session_state:
-        st.session_state.selected_question = available[0] if available else None
+        st.session_state.selected_question = remaining_questions[0] if remaining_questions else None
 
-    if available:
-        st.session_state.selected_question = st.selectbox(
+    if remaining_questions:
+        selected_idx = remaining_questions.index(st.session_state.selected_question) if st.session_state.selected_question in remaining_questions else 0
+        selected_question = st.selectbox(
             "❓ Choose a question:",
-            available,
+            remaining_questions,
+            index=selected_idx,
             key="question_selectbox"
         )
+        st.session_state.selected_question = selected_question
 
         if st.button("Submit Question"):
-            selected = st.session_state.selected_question
-            if selected:
-                answer = q_map[selected](st.session_state.secret)
-                st.session_state.answers.append((selected, answer))
-                st.session_state.asked_questions.append(selected)
-                st.session_state.points -= 2
-                remaining = [q for q in available if q != selected]
-                st.session_state.selected_question = remaining[0] if remaining else None
+            answer = q_map[selected_question](st.session_state.secret)
+            st.session_state.answers.append((selected_question, answer))
+            st.session_state.asked_questions.append(selected_question)
+            st.session_state.points -= 2
+
+            # Update remaining & reset selection
+            remaining_questions = [q for q in all_questions if q not in st.session_state.asked_questions]
+            st.session_state.selected_question = remaining_questions[0] if remaining_questions else None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -288,10 +286,8 @@ Warnings:
 
     st.markdown(f"🧠 **Guesses left:** {5 - st.session_state.attempts} | 🏆 **Points:** {st.session_state.points}")
 
-# Leaderboard + Play Again
 if not st.session_state.game_started and "secret" in st.session_state:
     player = st.text_input("🏅 Enter your name for the leaderboard:", key="player_name")
-    
     if st.button("Submit Score") and player:
         current_score = st.session_state.points
         existing = [s for s in st.session_state.leaderboard if s[0] == player]
@@ -309,7 +305,6 @@ if st.button("🎯 Play Again"):
     if st.session_state.points <= 0 or st.session_state.attempts >= 5:
         st.session_state.points = 100
         st.session_state.attempts = 0
-
     st.session_state.secret = None
     st.session_state.replay_requested = True
     st.session_state.game_started = False
@@ -319,6 +314,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
