@@ -181,7 +181,6 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
-    # --- QUESTION SECTION ---
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -193,30 +192,38 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
+    all_questions = list(q_map.keys())
 
-    # Keep selected index across reruns
-    if "selected_question_index" not in st.session_state:
-        st.session_state.selected_question_index = 0
+    if "selected_question" not in st.session_state:
+        st.session_state.selected_question = all_questions[0]
 
-    if available_questions:
-        selected_index = st.selectbox(
-            "❓ Choose a question:",
-            range(len(available_questions)),
-            format_func=lambda i: available_questions[i],
-            index=st.session_state.selected_question_index,
-            key="question_selector"
-        )
-        selected_question = available_questions[selected_index]
-        st.session_state.selected_question_index = selected_index
+    # Label asked questions
+    labeled_questions = [
+        f"{q} (already asked)" if q in st.session_state.asked_questions else q
+        for q in all_questions
+    ]
 
-        if st.button("Submit Question"):
+    # Find current index
+    current_index = all_questions.index(st.session_state.selected_question)
+
+    selected_label = st.selectbox(
+        "❓ Choose a question:",
+        labeled_questions,
+        index=current_index
+    )
+
+    # Map back to original question text
+    selected_question = selected_label.replace(" (already asked)", "")
+    st.session_state.selected_question = selected_question
+
+    if st.button("Submit Question"):
+        if selected_question in st.session_state.asked_questions:
+            st.warning("⚠️ You've already asked this question.")
+        else:
             answer = q_map[selected_question](st.session_state.secret)
             st.session_state.answers.append((selected_question, answer))
             st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
-            st.session_state.selected_question_index = 0  # reset for next round
-
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
