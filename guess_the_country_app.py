@@ -194,23 +194,33 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Filter unanswered questions
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Only initialize once, never overwrite on rerun
-    if "selected_question" not in st.session_state:
+    # Initialize selected_question if not already or if no longer valid
+    if "selected_question" not in st.session_state or st.session_state.selected_question not in available:
         st.session_state.selected_question = available[0]
 
-    # Display selectbox linked to session state
-    selected_question = st.selectbox("❓ Choose a question:", available, key="selected_question")
+    # Let the user choose a question and store the selection
+    st.session_state.selected_question = st.selectbox(
+        "❓ Choose a question:", available, 
+        index=available.index(st.session_state.selected_question)
+    )
 
-    # Do NOT overwrite selected_question manually! Let Streamlit handle it
+    # Use a flag to track if the button was clicked (survives reruns)
+    if "question_submitted" not in st.session_state:
+        st.session_state.question_submitted = False
 
     if st.button("Submit Question"):
+        st.session_state.question_submitted = True
+
+    # Handle the logic only if the button was submitted
+    if st.session_state.question_submitted:
+        selected_question = st.session_state.selected_question
         answer = q_map[selected_question](st.session_state.secret)
         st.session_state.answers.append((selected_question, answer))
         st.session_state.asked_questions.append(selected_question)
         st.session_state.points -= 2
+        st.session_state.question_submitted = False  # reset flag
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
