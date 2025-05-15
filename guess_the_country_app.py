@@ -103,7 +103,6 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
-# Initialisiere Session State Variablen
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -201,7 +200,7 @@ if st.session_state.game_started:
 
     available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Falls aktuell ausgewählte Frage nicht mehr verfügbar, neu setzen
+    # Reset selected_question if invalid
     if st.session_state.selected_question not in available_questions:
         st.session_state.selected_question = available_questions[0] if available_questions else ""
 
@@ -222,7 +221,7 @@ if st.session_state.game_started:
         st.session_state.asked_questions.append(selected)
         st.session_state.points -= 2
 
-        # Setze die Auswahl nach Absenden auf ersten verfügbaren Wert oder leere Zeichenkette
+        # Update selected_question to a valid next question or empty string
         new_available = [q for q in available_questions if q != selected]
         if new_available:
             st.session_state.selected_question = new_available[0]
@@ -338,6 +337,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
