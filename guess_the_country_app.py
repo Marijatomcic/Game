@@ -196,16 +196,25 @@ if st.session_state.game_started:
     available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
     if available_questions:
-        selected_question = st.selectbox("❓ Choose a question:", available_questions, key="selected_question")
+
+        # Set default selected question if not already present or removed
+        if "selected_question" not in st.session_state or st.session_state.selected_question not in available_questions:
+            st.session_state.selected_question = available_questions[0]
+
+        # Show dropdown and sync selection
+        selected_question = st.selectbox(
+            "❓ Choose a question:",
+            options=available_questions,
+            index=available_questions.index(st.session_state.selected_question),
+            key="dropdown_question"
+        )
+        st.session_state.selected_question = selected_question
 
         if st.button("Submit Question"):
             answer = q_map[selected_question](st.session_state.secret)
             st.session_state.answers.append((selected_question, answer))
             st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
-
-            # Clean selected_question so it doesn't cause index issues on next rerun
-            del st.session_state["selected_question"]
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
