@@ -197,22 +197,6 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    all_questions = list(q_map.keys())
-    
-    # Set default selection only once
-if st.session_state.game_started:
-
-    q_map = {
-        "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
-        "Is its population small, medium, or large?": lambda c: c["population"],
-        "Does it have a coastline?": lambda c: "Yes" if c["coastline"] else "No",
-        "Does it have more than 3 neighboring countries?": lambda c: "Yes" if c["neighbors"] > 3 else "No",
-        "Is it a UN member?": lambda c: "Yes" if c["un"] else "No",
-        "What is the country's capital city?": lambda c: c["capital"],
-        "What is the country's FIFA code?": lambda c: c["fifa"],
-        "What is the flag?": lambda c: "Here is the flag:"
-    }
-
     if "asked_questions" not in st.session_state:
         st.session_state.asked_questions = []
 
