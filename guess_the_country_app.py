@@ -211,11 +211,6 @@ if st.session_state.game_started:
             st.session_state.asked_questions.append(question)
             st.session_state.points -= 2
 
-            # Optional: update dropdown to next remaining question
-            remaining = [q for q in available if q != question]
-            if remaining:
-                st.session_state.selected_question = remaining[0]
-
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
         if q == "What is the flag?":
