@@ -100,7 +100,7 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
-# Initialize game state
+# Init game state
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -109,6 +109,10 @@ if "game_started" not in st.session_state:
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
+
+# Init selected_question for dropdown persistence
+if "selected_question" not in st.session_state:
+    st.session_state.selected_question = None
 
 st.markdown("## 🌍 Guess the Country Game")
 
@@ -127,7 +131,7 @@ Each round, a secret country is selected and enriched by <strong>AI-generated cu
   <li>🔍 Ask up to <strong>8 predefined questions</strong>, all answered intelligently by AI</li>
   <li>🎌 One reveals the country's flag (via AI logic)</li>
   <li>❌ Every time you guess wrong, AI gives you a new cultural hint</li>
-  <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong> — all AI-generated</li>
+  <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong></li>
   <li>🧠 Everything adapts to your selected difficulty</li>
 </ul>
 <p>The fewer questions and hints you use, the higher your final score.<br>
@@ -188,7 +192,10 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # ✅ FIXED: This form guarantees the question selection is submitted correctly
+    # Handle invalid state if selected question no longer available
+    if st.session_state.selected_question not in available and available:
+        st.session_state.selected_question = available[0]
+
     if available:
         with st.form("question_form"):
             selected = st.selectbox("❓ Choose a question:", options=available, key="selected_question")
@@ -199,6 +206,8 @@ if st.session_state.game_started:
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
+            # Optional: Reset selection after each submit
+            st.session_state.selected_question = None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -308,6 +317,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
