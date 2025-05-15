@@ -181,6 +181,7 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
+    # --- QUESTION SECTION ---
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -192,27 +193,26 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Only mark a question for removal after button press
-    if "remove_after_rerun" not in st.session_state:
-        st.session_state.remove_after_rerun = None
-
-    if st.session_state.remove_after_rerun:
-        st.session_state.asked_questions.append(st.session_state.remove_after_rerun)
-        st.session_state.remove_after_rerun = None
+    # Initialize session state
+    if "selected_question" not in st.session_state:
+        st.session_state.selected_question = None
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if "selected_question" not in st.session_state and available:
-        st.session_state.selected_question = available[0]
-
     if available:
-        selected = st.selectbox("❓ Choose a question:", available, key="selected_question")
+        # Try to keep the selected question if still available
+        default_index = available.index(st.session_state.selected_question) if st.session_state.selected_question in available else 0
+        selected = st.selectbox("❓ Choose a question:", available, index=default_index)
+
+        # Update selection in session state
+        st.session_state.selected_question = selected
 
         if st.button("Submit Question"):
             answer = q_map[selected](st.session_state.secret)
             st.session_state.answers.append((selected, answer))
+            st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
-            st.session_state.remove_after_rerun = selected  # Remove AFTER rerun
+            st.session_state.selected_question = None  # Reset after submission
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
