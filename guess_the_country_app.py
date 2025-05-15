@@ -193,26 +193,32 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Initialize session state
+    all_questions = list(q_map.keys())
+
+    # Init selected question if not set
     if "selected_question" not in st.session_state:
-        st.session_state.selected_question = None
+        st.session_state.selected_question = all_questions[0]
 
-    available = [q for q in q_map if q not in st.session_state.asked_questions]
+    # Build display list: mark asked questions
+    display_options = [
+        f"✅ {q}" if q in st.session_state.asked_questions else q
+        for q in all_questions
+    ]
 
-    if available:
-        # Try to keep the selected question if still available
-        default_index = available.index(st.session_state.selected_question) if st.session_state.selected_question in available else 0
-        selected = st.selectbox("❓ Choose a question:", available, index=default_index)
+    # Keep correct index to avoid jumping
+    current_index = all_questions.index(st.session_state.selected_question) if st.session_state.selected_question in all_questions else 0
+    selected_display = st.selectbox("❓ Choose a question:", display_options, index=current_index)
+    selected_question = selected_display.replace("✅ ", "")
+    st.session_state.selected_question = selected_question
 
-        # Update selection in session state
-        st.session_state.selected_question = selected
-
-        if st.button("Submit Question"):
-            answer = q_map[selected](st.session_state.secret)
-            st.session_state.answers.append((selected, answer))
-            st.session_state.asked_questions.append(selected)
+    if st.button("Submit Question"):
+        if selected_question in st.session_state.asked_questions:
+            st.warning("⚠️ You've already asked this question.")
+        else:
+            answer = q_map[selected_question](st.session_state.secret)
+            st.session_state.answers.append((selected_question, answer))
+            st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
-            st.session_state.selected_question = None  # Reset after submission
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
