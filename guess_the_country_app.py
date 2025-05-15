@@ -209,7 +209,6 @@ if st.session_state.game_started:
         st.session_state.answers.append((question, answer))
         st.session_state.asked_questions.append(question)
         st.session_state.points -= 2
-        st.session_state.update({"selected_question": None})  # ✅ Safe reset
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
