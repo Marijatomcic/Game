@@ -176,13 +176,13 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
 # 🔄 Game logic block
 if st.session_state.game_started:
 
-    # End game if points are gone
+    # End the game immediately if points are zero or below
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
         st.stop()
 
-    # All possible questions
+    # QUESTION SECTION with persistent dropdown selection
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -194,42 +194,20 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Remove already asked
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Store the temporary selection (not yet committed)
-    selected_temp = st.selectbox("❓ Choose a question:", available)
+    if "selected_question" not in st.session_state:
+        st.session_state.selected_question = None
 
-    # Init confirmed question only once
-    if "confirmed_question" not in st.session_state:
-        st.session_state.confirmed_question = None
+    st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-    # Confirm selection (prevents jumping or wrong question being used)
-    if st.button("✅ Confirm selection"):
-        st.session_state.confirmed_question = selected_temp
-        st.experimental_rerun()  # necessary to lock in the correct question
-
-    # Show submit button only if confirmed
-    if st.session_state.confirmed_question:
-        if st.button("Submit Question"):
-            q = st.session_state.confirmed_question
-            if q not in st.session_state.asked_questions:
-                answer = q_map[q](st.session_state.secret)
-                st.session_state.answers.append((q, answer))
-                st.session_state.asked_questions.append(q)
-                st.session_state.points -= 2
-            st.session_state.confirmed_question = None  # reset
-            st.experimental_rerun()
-
-    # Show previous answers once
-    shown = set()
-    for q, a in st.session_state.answers:
-        if q not in shown:
-            st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
-            if q == "What is the flag?":
-                code = st.session_state.secret.get("cca2", "XX")
-                st.image(f"https://flagsapi.com/{code}/flat/64.png", width=100)
-            shown.add(q)
+    if st.button("Submit Question") and st.session_state.selected_question:
+        question = st.session_state.selected_question
+        answer = q_map[question](st.session_state.secret)
+        st.session_state.answers.append((question, answer))
+        st.session_state.asked_questions.append(question)
+        st.session_state.points -= 2
+        st.session_state.selected_question = None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
