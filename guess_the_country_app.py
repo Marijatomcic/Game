@@ -13,7 +13,7 @@ load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     api_key = st.secrets["OPENAPI_API_KEY"]
-
+ 
 client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
 model_key = "openai/gpt-4.1-nano"
 
@@ -82,6 +82,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
 def classify_population(pop):
     if pop < 1_000_000: return "small"
     elif pop < 30_000_000: return "medium"
@@ -110,9 +111,37 @@ if "game_started" not in st.session_state:
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
+
+if "selected_question" not in st.session_state:
     st.session_state.selected_question = None
 
 st.markdown("## 🌍 Guess the Country Game")
+
+# ✅ Custom pastel yellow instruction box
+st.markdown("""
+<div style="
+    background-color: #fdf3c3;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #f1e3a3;
+    margin-bottom: 2rem;
+">
+<h4>🧠 Game Instructions — powered by AI</h4>
+<p>Welcome to <strong>Guess the Country!</strong> 🌍<br>
+Each round, a secret country is selected and enriched by <strong>AI-generated cultural insights</strong>.</p>
+
+<ul>
+  <li>🔍 Ask up to <strong>8 predefined questions</strong>, all answered intelligently by AI</li>
+  <li>🎌 One reveals the country's flag (via AI logic)</li>
+  <li>❌ Every time you guess wrong, AI gives you a new cultural hint</li>
+  <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong> — all AI-generated</li>
+  <li>🧠 Everything adapts to your selected difficulty</li>
+</ul>
+
+<p>The fewer questions and hints you use, the higher your final score.<br>
+Ready to test your global knowledge — and outsmart the AI?</p>
+</div>
+""", unsafe_allow_html=True)
 
 difficulty = st.selectbox("🔍 Select difficulty", ["easy", "medium", "hard"])
 
@@ -149,6 +178,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
 
 # 🔄 Game logic block
 if st.session_state.game_started:
+
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
@@ -165,6 +195,7 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
+    # ✅ Fixed selectbox bug
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
     if st.session_state.selected_question not in available and available:
@@ -172,11 +203,7 @@ if st.session_state.game_started:
 
     if available:
         with st.form("question_form"):
-            selected = st.selectbox(
-                "❓ Choose a question:",
-                options=available,
-                key="selected_question"
-            )
+            selected = st.selectbox("❓ Choose a question:", available, key="selected_question")
             submitted = st.form_submit_button("Submit Question")
 
         if submitted:
@@ -184,10 +211,6 @@ if st.session_state.game_started:
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
-
-            remaining = [q for q in q_map if q not in st.session_state.asked_questions]
-            if remaining:
-                st.session_state.selected_question = remaining[0]
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -224,11 +247,7 @@ if st.session_state.game_started:
             st.session_state.attempts += 1
             st.session_state.points -= 20
 
-            if st.session_state.points <= 0:
-                st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
-                st.session_state.game_started = False
-
-            if st.session_state.attempts >= 5:
+            if st.session_state.points <= 0 or st.session_state.attempts >= 5:
                 st.error(f"😢 Game Over! The country was **{st.session_state.secret['name']}**")
                 st.session_state.game_started = False
             else:
@@ -271,7 +290,7 @@ Warnings:
 
 if not st.session_state.game_started and "secret" in st.session_state:
     player = st.text_input("🏅 Enter your name for the leaderboard:", key="player_name")
-
+    
     if st.button("Submit Score") and player:
         current_score = st.session_state.points
         existing = [s for s in st.session_state.leaderboard if s[0] == player]
@@ -282,6 +301,7 @@ if not st.session_state.game_started and "secret" in st.session_state:
                 st.session_state.leaderboard.append((player, current_score))
         else:
             st.session_state.leaderboard.append((player, current_score))
+
         st.session_state.leaderboard = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)[:5]
 
 if st.button("🎯 Play Again"):
@@ -297,6 +317,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
