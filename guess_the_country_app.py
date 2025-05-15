@@ -200,31 +200,39 @@ if st.session_state.game_started:
     all_questions = list(q_map.keys())
     
     # Set default selection only once
-    if "selected_question" not in st.session_state:
-        st.session_state.selected_question = all_questions[0]
+if st.session_state.game_started:
 
-    # Calculate available questions (but do not filter selectbox yet)
-    asked = st.session_state.get("asked_questions", [])
-    available = [q for q in all_questions if q not in asked]
+    q_map = {
+        "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
+        "Is its population small, medium, or large?": lambda c: c["population"],
+        "Does it have a coastline?": lambda c: "Yes" if c["coastline"] else "No",
+        "Does it have more than 3 neighboring countries?": lambda c: "Yes" if c["neighbors"] > 3 else "No",
+        "Is it a UN member?": lambda c: "Yes" if c["un"] else "No",
+        "What is the country's capital city?": lambda c: c["capital"],
+        "What is the country's FIFA code?": lambda c: c["fifa"],
+        "What is the flag?": lambda c: "Here is the flag:"
+    }
 
-    # Show only available questions
-    selected = st.selectbox(
-        "❓ Choose a question:",
-        available,
-        index=available.index(st.session_state.selected_question) if st.session_state.selected_question in available else 0,
-        key="question_selector"
-    )
+    if "asked_questions" not in st.session_state:
+        st.session_state.asked_questions = []
 
-    if st.button("Submit Question"):
-        st.session_state.selected_question = selected  # Save selected value manually
+    available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
-        if selected in available:
-            answer = q_map[selected](st.session_state.secret)
-            st.session_state.answers.append((selected, answer))
-            st.session_state.asked_questions.append(selected)
+    if not available_questions:
+        st.info("✅ You've asked all available questions.")
+    else:
+        # Selectbox value is stored separately, not in session state
+        selected_question_input = st.selectbox("❓ Choose a question:", available_questions)
+
+        # When user clicks, we store the selected question and update session state
+        if st.button("Submit Question"):
+            st.session_state.selected_question = selected_question_input
+
+            # Only then we remove it from the list
+            answer = q_map[st.session_state.selected_question](st.session_state.secret)
+            st.session_state.answers.append((st.session_state.selected_question, answer))
+            st.session_state.asked_questions.append(st.session_state.selected_question)
             st.session_state.points -= 2
-        else:
-            st.warning("⚠️ This question is no longer available.")
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
