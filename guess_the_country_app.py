@@ -173,7 +173,6 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-
 # 🔄 Game logic block
 if st.session_state.game_started:
 
@@ -197,18 +196,21 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Initialize selected_question only once
-    if "selected_question" not in st.session_state and available:
-        st.session_state.selected_question = available[0]
-
     if available:
-        st.selectbox("❓ Choose a question:", available, key="selected_question")
+        # Get the previously selected question or default to the first one
+        default_question = st.session_state.get("selected_question", available[0])
+
+        # Use index instead of key to avoid conflicts
+        selected_index = available.index(default_question)
+        selected_question = st.selectbox("❓ Choose a question:", available, index=selected_index)
+
+        # Save selection manually
+        st.session_state.selected_question = selected_question
 
         if st.button("Submit Question"):
-            question = st.session_state.selected_question
-            answer = q_map[question](st.session_state.secret)
-            st.session_state.answers.append((question, answer))
-            st.session_state.asked_questions.append(question)
+            answer = q_map[selected_question](st.session_state.secret)
+            st.session_state.answers.append((selected_question, answer))
+            st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
