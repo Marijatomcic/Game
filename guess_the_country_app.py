@@ -182,7 +182,7 @@ if st.session_state.game_started:
         st.session_state.game_started = False
         st.stop()
 
-    # --- QUESTION SECTION ---
+    # QUESTION SECTION
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -196,26 +196,29 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Set default only once, or if old selection is invalid
+    # Selectbox managed by key only
     if "selected_question" not in st.session_state or st.session_state.selected_question not in available:
         st.session_state.selected_question = available[0]
 
-    # Let Streamlit handle the dropdown – key is all that's needed
     st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-    if st.button("Submit Question"):
-        selected = st.session_state.selected_question
-        answer = q_map[selected](st.session_state.secret)
-        st.session_state.answers.append((selected, answer))
-        st.session_state.asked_questions.append(selected)
-        st.session_state.points -= 2
+    # Submit flag to avoid rerun-duplication
+    if "question_submit_flag" not in st.session_state:
+        st.session_state.question_submit_flag = False
 
-    # --- Show all answered questions ---
-    for q, a in st.session_state.answers:
-        st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
-        if q == "What is the flag?":
-            code = st.session_state.secret.get("cca2", "XX")
-            st.image(f"https://flagsapi.com/{code}/flat/64.png", width=100)
+    if st.button("Submit Question"):
+        st.session_state.question_submit_flag = True
+
+    if st.session_state.question_submit_flag:
+        selected = st.session_state.selected_question
+
+        if selected not in st.session_state.asked_questions:
+            answer = q_map[selected](st.session_state.secret)
+            st.session_state.answers.append((selected, answer))
+            st.session_state.asked_questions.append(selected)
+            st.session_state.points -= 2
+
+        st.session_state.question_submit_flag = False  # prevent repeat
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
