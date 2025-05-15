@@ -176,13 +176,11 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
 # 🔄 Game logic block
 if st.session_state.game_started:
 
-    # End the game immediately if points are zero or below
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
         st.stop()
 
-    # QUESTION SECTION
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -194,22 +192,27 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
+    # Only mark a question for removal after button press
+    if "remove_after_rerun" not in st.session_state:
+        st.session_state.remove_after_rerun = None
+
+    if st.session_state.remove_after_rerun:
+        st.session_state.asked_questions.append(st.session_state.remove_after_rerun)
+        st.session_state.remove_after_rerun = None
+
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if available:
-        if "selected_index" not in st.session_state:
-            st.session_state.selected_index = 0
+    if "selected_question" not in st.session_state and available:
+        st.session_state.selected_question = available[0]
 
-        # Use index-based dropdown to avoid jump
-        selected_index = st.selectbox("❓ Choose a question:", range(len(available)), format_func=lambda i: available[i])
-        selected_question = available[selected_index]
+    if available:
+        selected = st.selectbox("❓ Choose a question:", available, key="selected_question")
 
         if st.button("Submit Question"):
-            answer = q_map[selected_question](st.session_state.secret)
-            st.session_state.answers.append((selected_question, answer))
-            st.session_state.asked_questions.append(selected_question)
+            answer = q_map[selected](st.session_state.secret)
+            st.session_state.answers.append((selected, answer))
             st.session_state.points -= 2
-            st.session_state.selected_index = 0  # Optional reset
+            st.session_state.remove_after_rerun = selected  # Remove AFTER rerun
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
