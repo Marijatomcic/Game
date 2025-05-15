@@ -176,6 +176,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
 # 🔄 Game logic block
 if st.session_state.game_started:
 
+    # End game if points are gone
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
@@ -193,9 +194,9 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Only show unasked questions
     available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
+    # Only show dropdown if there are unasked questions
     if available_questions:
         selected_question = st.selectbox("❓ Choose a question:", available_questions, key="selected_question")
 
@@ -204,13 +205,6 @@ if st.session_state.game_started:
             st.session_state.answers.append((selected_question, answer))
             st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
-
-            # Set next available question, or clear selection
-            remaining = [q for q in q_map if q not in st.session_state.asked_questions]
-            if remaining:
-                st.session_state.selected_question = remaining[0]
-            else:
-                st.session_state.selected_question = None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
