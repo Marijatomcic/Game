@@ -78,7 +78,6 @@ st.markdown("""
         border-radius: 8px;
         padding: 0.5em;
     }
-
     </style>
 """, unsafe_allow_html=True)
 
@@ -189,23 +188,17 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if "selected_question" not in st.session_state and available:
-        st.session_state.selected_question = available[0]
-
     if available:
-        st.session_state.selected_question = st.selectbox(
+        selected_question = st.selectbox(
             "❓ Choose a question:",
-            available,
-            index=available.index(st.session_state.selected_question)
-            if st.session_state.selected_question in available else 0,
-            key="question_selectbox"
+            options=available,
+            key="selected_question"
         )
 
         if st.button("Submit Question"):
-            selected = st.session_state.selected_question
-            answer = q_map[selected](st.session_state.secret)
-            st.session_state.answers.append((selected, answer))
-            st.session_state.asked_questions.append(selected)
+            answer = q_map[selected_question](st.session_state.secret)
+            st.session_state.answers.append((selected_question, answer))
+            st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
@@ -290,7 +283,7 @@ Warnings:
 
 if not st.session_state.game_started and "secret" in st.session_state:
     player = st.text_input("🏅 Enter your name for the leaderboard:", key="player_name")
-    
+
     if st.button("Submit Score") and player:
         current_score = st.session_state.points
         existing = [s for s in st.session_state.leaderboard if s[0] == player]
@@ -316,6 +309,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
