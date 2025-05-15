@@ -197,21 +197,14 @@ if st.session_state.game_started:
     # Filter unanswered questions
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Fallback init
+    # Only initialize once, never overwrite on rerun
     if "selected_question" not in st.session_state:
-        st.session_state.selected_question = None
+        st.session_state.selected_question = available[0]
 
-    # Pick last used question if still valid, else fallback to first
-    if st.session_state.selected_question in available:
-        default_index = available.index(st.session_state.selected_question)
-    else:
-        default_index = 0
+    # Display selectbox linked to session state
+    selected_question = st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-    # Show selectbox without key
-    selected_question = st.selectbox("❓ Choose a question:", available, index=default_index)
-
-    # Save selection manually
-    st.session_state.selected_question = selected_question
+    # Do NOT overwrite selected_question manually! Let Streamlit handle it
 
     if st.button("Submit Question"):
         answer = q_map[selected_question](st.session_state.secret)
