@@ -60,15 +60,20 @@ st.markdown("""
         font-size: 1.05em;
         color: #333;
     }
+    .stSelectbox > div > div {
+        background-color: #e4cdb3 !important;
+        border-radius: 8px;
+    }
     .stButton > button {
         background-color: #3f3f3f;
         color: white;
         padding: 0.6em 1.5em;
         font-size: 1.05em;
         border-radius: 10px;
-        margin: 0.2em 0;
         width: 100%;
         text-align: left;
+        margin-top: 0.25em;
+        margin-bottom: 0.25em;
     }
     input[type="text"] {
         background-color: #2f3b47 !important;
@@ -98,7 +103,7 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
-# Initialize game state
+# Initialisiere Session State Variablen
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -107,6 +112,7 @@ if "game_started" not in st.session_state:
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
+    st.session_state.selected_question = None
 
 st.markdown("## 🌍 Guess the Country Game")
 
@@ -172,6 +178,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.previous_hints = []
     st.session_state.points = 100
     st.session_state.attempts = 0
+    st.session_state.selected_question = None
     st.session_state.game_started = True
     st.success("New country loaded!")
 
@@ -194,15 +201,27 @@ if st.session_state.game_started:
 
     available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    button_clicked = False
-    for question in available_questions:
-        key = f"btn_{question}"
-        if st.button(question, key=key) and not button_clicked:
-            answer = q_map[question](st.session_state.secret)
-            st.session_state.answers.append((question, answer))
-            st.session_state.asked_questions.append(question)
-            st.session_state.points -= 2
-            button_clicked = True  # Nur eine Aktion pro Run
+    # Validierung des aktuell ausgewählten Dropdown-Werts
+    if st.session_state.selected_question not in available_questions:
+        st.session_state.selected_question = available_questions[0] if available_questions else None
+
+    if available_questions:
+        selected = st.selectbox(
+            "❓ Choose a question:",
+            options=available_questions,
+            index=available_questions.index(st.session_state.selected_question) if st.session_state.selected_question else 0,
+            key="selected_question"
+        )
+    else:
+        st.info("All questions asked!")
+        selected = None
+
+    if st.button("Submit Question") and selected:
+        answer = q_map[selected](st.session_state.secret)
+        st.session_state.answers.append((selected, answer))
+        st.session_state.asked_questions.append(selected)
+        st.session_state.points -= 2
+        st.session_state.selected_question = None  # Auswahl zurücksetzen
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -306,12 +325,14 @@ if st.button("🎯 Play Again"):
     st.session_state.secret = None
     st.session_state.replay_requested = True
     st.session_state.game_started = False
+    st.session_state.selected_question = None
     st.experimental_rerun()
 
 if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
