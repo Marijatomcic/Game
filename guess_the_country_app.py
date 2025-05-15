@@ -182,32 +182,37 @@ if st.session_state.game_started:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
         st.stop()
-
-    # QUESTION SECTION
-    q_map = {
-        "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
-        "Is its population small, medium, or large?": lambda c: c["population"],
-        "Does it have a coastline?": lambda c: "Yes" if c["coastline"] else "No",
-        "Does it have more than 3 neighboring countries?": lambda c: "Yes" if c["neighbors"] > 3 else "No",
-        "Is it a UN member?": lambda c: "Yes" if c["un"] else "No",
-        "What is the country's capital city?": lambda c: c["capital"],
-        "What is the country's FIFA code?": lambda c: c["fifa"],
-        "What is the flag?": lambda c: "Here is the flag:"
-    }
+#Question section
+q_map = {
+    "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
+    "Is its population small, medium, or large?": lambda c: c["population"],
+    "Does it have a coastline?": lambda c: "Yes" if c["coastline"] else "No",
+    "Does it have more than 3 neighboring countries?": lambda c: "Yes" if c["neighbors"] > 3 else "No",
+    "Is it a UN member?": lambda c: "Yes" if c["un"] else "No",
+    "What is the country's capital city?": lambda c: c["capital"],
+    "What is the country's FIFA code?": lambda c: c["fifa"],
+    "What is the flag?": lambda c: "Here is the flag:"
+}
 
 available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-if available:
-    selected_question = st.selectbox("❓ Choose a question:", available, key="question_selector")
+# Store the selected question in session state
+st.session_state.selected_question = st.selectbox(
+    "❓ Choose a question:",
+    available,
+    key="question_selector"
+)
 
-    if st.button("Submit Question"):
-        if selected_question in available:
-            answer = q_map[selected_question](st.session_state.secret)
-            st.session_state.answers.append((selected_question, answer))
-            st.session_state.asked_questions.append(selected_question)
-            st.session_state.points -= 2
-        else:
-            st.warning("⚠️ This question is no longer available.")
+if st.button("Submit Question"):
+    selected = st.session_state.selected_question
+    if selected in available:
+        answer = q_map[selected](st.session_state.secret)
+        st.session_state.answers.append((selected, answer))
+        st.session_state.asked_questions.append(selected)
+        st.session_state.points -= 2
+    else:
+        st.warning("⚠️ This question is no longer available.")
+
 
 
     for q, a in st.session_state.answers:
