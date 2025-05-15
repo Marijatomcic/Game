@@ -182,10 +182,10 @@ if st.session_state.game_started:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
         st.stop()
-        
+
 # ✅ Only allow question section if game has started
 if st.session_state.game_started:
-    
+
     q_map = {
         "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
         "Is its population small, medium, or large?": lambda c: c["population"],
@@ -199,25 +199,27 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if available:
-        st.session_state.selected_question = st.selectbox(
-            "❓ Choose a question:",
-            available,
-            key="question_selector"
-        )
+    # Init selected_question once
+    if "selected_question" not in st.session_state or st.session_state.selected_question not in available:
+        st.session_state.selected_question = available[0] if available else ""
 
-        if st.button("Submit Question"):
-            selected = st.session_state.selected_question
-            if selected in available:
-                answer = q_map[selected](st.session_state.secret)
-                st.session_state.answers.append((selected, answer))
-                st.session_state.asked_questions.append(selected)
-                st.session_state.points -= 2
-            else:
-                st.warning("⚠️ This question is no longer available.")
+    selected_question = st.selectbox(
+        "❓ Choose a question:",
+        options=available,
+        key="question_selector"
+    )
 
+    if st.button("Submit Question"):
+        # Save manually to avoid index jumps
+        st.session_state.selected_question = selected_question
 
-
+        if selected_question in available:
+            answer = q_map[selected_question](st.session_state.secret)
+            st.session_state.answers.append((selected_question, answer))
+            st.session_state.asked_questions.append(selected_question)
+            st.session_state.points -= 2
+        else:
+            st.warning("⚠️ This question is no longer available.")
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
