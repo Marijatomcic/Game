@@ -188,16 +188,15 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
+    # ✅ FIXED: This form guarantees the question selection is submitted correctly
     if available:
         with st.form("question_form"):
-            selected = st.selectbox(
-                "❓ Choose a question:",
-                options=available,
-                key="selected_question"
-            )
+            selected = st.selectbox("❓ Choose a question:", options=available, key="selected_question")
             submitted = st.form_submit_button("Submit Question")
 
         if submitted:
+            st.session_state.selected_question = selected 
+            
             answer = q_map[selected](st.session_state.secret)
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
@@ -305,7 +304,7 @@ if st.button("🎯 Play Again"):
     st.session_state.secret = None
     st.session_state.replay_requested = True
     st.session_state.game_started = False
-    st.experimental_rerun()
+    st.rerun()
 
 if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
