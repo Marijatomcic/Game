@@ -194,17 +194,19 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
+    # Filter out already asked questions
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
     if available:
-        # Get the previously selected question or default to the first one
-        default_question = st.session_state.get("selected_question", available[0])
-
-        # Use index instead of key to avoid conflicts
+        # Use last selected question if still available, otherwise fallback to first available
+        last_selected = st.session_state.get("selected_question")
+        default_question = last_selected if last_selected in available else available[0]
         selected_index = available.index(default_question)
+
+        # Show selectbox without key= to avoid streamlit state conflicts
         selected_question = st.selectbox("❓ Choose a question:", available, index=selected_index)
 
-        # Save selection manually
+        # Manually store selection
         st.session_state.selected_question = selected_question
 
         if st.button("Submit Question"):
