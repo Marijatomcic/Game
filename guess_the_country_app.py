@@ -173,7 +173,6 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-
 # 🔄 Game logic block
 if st.session_state.game_started:
 
@@ -197,19 +196,20 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Dropdown Fix: remember user's choice
-    if "selected_question" not in st.session_state and available:
-        st.session_state.selected_question = available[0]
-
     if available:
-        st.selectbox("❓ Choose a question:", available, key="selected_question")
+        if "selected_index" not in st.session_state:
+            st.session_state.selected_index = 0
+
+        # Use index-based dropdown to avoid jump
+        selected_index = st.selectbox("❓ Choose a question:", range(len(available)), format_func=lambda i: available[i])
+        selected_question = available[selected_index]
 
         if st.button("Submit Question"):
-            selected = st.session_state.selected_question
-            answer = q_map[selected](st.session_state.secret)
-            st.session_state.answers.append((selected, answer))
-            st.session_state.asked_questions.append(selected)
+            answer = q_map[selected_question](st.session_state.secret)
+            st.session_state.answers.append((selected_question, answer))
+            st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
+            st.session_state.selected_index = 0  # Optional reset
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
