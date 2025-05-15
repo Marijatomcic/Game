@@ -193,28 +193,26 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
+    # Verfügbare Fragen berechnen (gefiltert)
     available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
+    # Wenn noch Fragen da sind → Dropdown
     if available_questions:
-
-        # Set default selected question if not already present or removed
-        if "selected_question" not in st.session_state or st.session_state.selected_question not in available_questions:
-            st.session_state.selected_question = available_questions[0]
-
-        # Show dropdown and sync selection
-        selected_question = st.selectbox(
+        st.selectbox(
             "❓ Choose a question:",
-            options=available_questions,
-            index=available_questions.index(st.session_state.selected_question),
-            key="dropdown_question"
+            available_questions,
+            key="selected_question"
         )
-        st.session_state.selected_question = selected_question
 
         if st.button("Submit Question"):
-            answer = q_map[selected_question](st.session_state.secret)
-            st.session_state.answers.append((selected_question, answer))
-            st.session_state.asked_questions.append(selected_question)
-            st.session_state.points -= 2
+            selected_question = st.session_state.selected_question
+            if selected_question not in st.session_state.asked_questions:
+                answer = q_map[selected_question](st.session_state.secret)
+                st.session_state.answers.append((selected_question, answer))
+                st.session_state.asked_questions.append(selected_question)
+                st.session_state.points -= 2
+            else:
+                st.warning("You've already asked this question.")
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
