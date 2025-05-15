@@ -194,26 +194,22 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Filter out already asked questions
+    # Filter unanswered questions
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if available:
-        # Use last selected question if still available, otherwise fallback to first available
-        last_selected = st.session_state.get("selected_question")
-        default_question = last_selected if last_selected in available else available[0]
-        selected_index = available.index(default_question)
+    # Initialize selected_question safely (if missing or outdated)
+    if "selected_question" not in st.session_state or st.session_state.selected_question not in available:
+        st.session_state.selected_question = available[0]
 
-        # Show selectbox without key= to avoid streamlit state conflicts
-        selected_question = st.selectbox("❓ Choose a question:", available, index=selected_index)
+    # Show dropdown tied to session state
+    selected_question = st.selectbox("❓ Choose a question:", available, key="selected_question")
 
-        # Manually store selection
-        st.session_state.selected_question = selected_question
-
-        if st.button("Submit Question"):
-            answer = q_map[selected_question](st.session_state.secret)
-            st.session_state.answers.append((selected_question, answer))
-            st.session_state.asked_questions.append(selected_question)
-            st.session_state.points -= 2
+    # Process selected question
+    if st.button("Submit Question"):
+        answer = q_map[selected_question](st.session_state.secret)
+        st.session_state.answers.append((selected_question, answer))
+        st.session_state.asked_questions.append(selected_question)
+        st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
