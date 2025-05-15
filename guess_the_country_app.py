@@ -168,7 +168,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-# 🔄 Game logic
+# Game logic
 if st.session_state.game_started:
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
@@ -186,10 +186,9 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    # Fragen ohne "What is the flag?"
+    # Fragen außer Flagge
     text_questions = [q for q in q_map if q != "What is the flag?" and q not in st.session_state.asked_questions]
 
-    # Frage im Dropdown auswählen
     if text_questions:
         if "selected_question" not in st.session_state or st.session_state.selected_question not in text_questions:
             st.session_state.selected_question = text_questions[0]
@@ -205,7 +204,7 @@ if st.session_state.game_started:
             st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
 
-    # Separater Button für "What is the flag?"
+    # Flaggen-Button
     if "What is the flag?" not in st.session_state.asked_questions:
         if st.button("🎌 Show Flag"):
             answer = q_map["What is the flag?"](st.session_state.secret)
@@ -220,7 +219,6 @@ if st.session_state.game_started:
             code = st.session_state.secret.get("cca2", "XX")
             st.image(f"https://flagsapi.com/{code}/flat/64.png", width=100)
 
-    # Rate-Feld und Logik (unverändert)
     st.markdown("🎯 **Your Guess:**")
     guess = st.text_input("Enter your country guess")
     if st.button("Submit Guess"):
@@ -323,6 +321,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
