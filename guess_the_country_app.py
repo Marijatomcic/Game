@@ -194,23 +194,22 @@ if st.session_state.game_started:
 
     available_questions = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Fragen als Buttons anzeigen
+    button_clicked = False
     for question in available_questions:
-        if st.button(question):
+        key = f"btn_{question}"
+        if st.button(question, key=key) and not button_clicked:
             answer = q_map[question](st.session_state.secret)
             st.session_state.answers.append((question, answer))
             st.session_state.asked_questions.append(question)
             st.session_state.points -= 2
-            st.experimental_rerun()  # neu laden, damit Button verschwindet
+            button_clicked = True  # Nur eine Aktion pro Run
 
-    # Antworten anzeigen
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
         if q == "What is the flag?":
             code = st.session_state.secret.get("cca2", "XX")
             st.image(f"https://flagsapi.com/{code}/flat/64.png", width=100)
 
-    # Rate-Eingabe
     st.markdown("🎯 **Your Guess:**")
     guess = st.text_input("Enter your country guess")
     if st.button("Submit Guess"):
@@ -313,6 +312,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
