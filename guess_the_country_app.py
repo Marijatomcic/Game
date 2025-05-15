@@ -195,14 +195,20 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    available = [q for q in q_map if q not in st.session_state.asked_questions]
-    if available:
-        question = st.selectbox("❓ Choose a question:", available)
-        if st.button("Submit Question"):
-            answer = q_map[question](st.session_state.secret)
-            st.session_state.answers.append((question, answer))
-            st.session_state.asked_questions.append(question)
+available = [q for q in q_map if q not in st.session_state.asked_questions]
+
+if available:
+    selected_question = st.selectbox("❓ Choose a question:", available, key="question_selector")
+
+    if st.button("Submit Question"):
+        if selected_question in available:
+            answer = q_map[selected_question](st.session_state.secret)
+            st.session_state.answers.append((selected_question, answer))
+            st.session_state.asked_questions.append(selected_question)
             st.session_state.points -= 2
+        else:
+            st.warning("⚠️ This question is no longer available.")
+
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
