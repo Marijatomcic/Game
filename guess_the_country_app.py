@@ -197,26 +197,31 @@ if st.session_state.game_started:
         "What is the flag?": lambda c: "Here is the flag:"
     }
 
-    available = [q for q in q_map if q not in st.session_state.asked_questions]
+    all_questions = list(q_map.keys())
+    
+    # Set default selection only once
+    if "selected_question" not in st.session_state:
+        st.session_state.selected_question = all_questions[0]
 
-    # Init selected_question once
-    if "selected_question" not in st.session_state or st.session_state.selected_question not in available:
-        st.session_state.selected_question = available[0] if available else ""
+    # Calculate available questions (but do not filter selectbox yet)
+    asked = st.session_state.get("asked_questions", [])
+    available = [q for q in all_questions if q not in asked]
 
-    selected_question = st.selectbox(
+    # Show only available questions
+    selected = st.selectbox(
         "❓ Choose a question:",
-        options=available,
+        available,
+        index=available.index(st.session_state.selected_question) if st.session_state.selected_question in available else 0,
         key="question_selector"
     )
 
     if st.button("Submit Question"):
-        # Save manually to avoid index jumps
-        st.session_state.selected_question = selected_question
+        st.session_state.selected_question = selected  # Save selected value manually
 
-        if selected_question in available:
-            answer = q_map[selected_question](st.session_state.secret)
-            st.session_state.answers.append((selected_question, answer))
-            st.session_state.asked_questions.append(selected_question)
+        if selected in available:
+            answer = q_map[selected](st.session_state.secret)
+            st.session_state.answers.append((selected, answer))
+            st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
         else:
             st.warning("⚠️ This question is no longer available.")
