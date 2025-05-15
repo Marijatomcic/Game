@@ -100,7 +100,7 @@ Respond ONLY in valid compact JSON format like:
     except:
         return {"food": [], "landmark": [], "festival": []}
 
-# Init game state
+# Initialize game state
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.points = 100
@@ -109,10 +109,6 @@ if "game_started" not in st.session_state:
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
-
-# NEW: Initialize dropdown state once
-if "selected_question" not in st.session_state:
-    st.session_state.selected_question = None
 
 st.markdown("## 🌍 Guess the Country Game")
 
@@ -172,7 +168,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-# 🔄 Game logic block
+# 🔄 Game logic
 if st.session_state.game_started:
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
@@ -192,17 +188,13 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
+    # ✅ FIXED: This form guarantees the question selection is submitted correctly
     if available:
-        selected = st.selectbox(
-            "❓ Choose a question:",
-            options=available,
-            key="selectbox_key"
-        )
+        with st.form("question_form"):
+            selected = st.selectbox("❓ Choose a question:", options=available, key="selected_question")
+            submitted = st.form_submit_button("Submit Question")
 
-        # Save the current selection into session state
-        st.session_state.selected_question = selected
-
-        if st.button("Submit Question"):
+        if submitted:
             answer = q_map[selected](st.session_state.secret)
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
@@ -316,6 +308,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
