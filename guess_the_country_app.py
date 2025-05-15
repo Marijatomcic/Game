@@ -174,53 +174,44 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.success("New country loaded!")
 
 
-# 🔄 Game logic block
+# Game logic block
 if st.session_state.game_started:
 
-# End the game immediately if points are zero or below
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
         st.stop()
 
-# Init needed variables
-if "asked_questions" not in st.session_state:
-    st.session_state.asked_questions = []
-if "pending_question" not in st.session_state:
-    st.session_state.pending_question = None
+    q_map = {
+        "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
+        "Is its population small, medium, or large?": lambda c: c["population"],
+        "Does it have a coastline?": lambda c: "Yes" if c["coastline"] else "No",
+        "Does it have more than 3 neighboring countries?": lambda c: "Yes" if c["neighbors"] > 3 else "No",
+        "Is it a UN member?": lambda c: "Yes" if c["un"] else "No",
+        "What is the country's capital city?": lambda c: c["capital"],
+        "What is the country's FIFA code?": lambda c: c["fifa"],
+        "What is the flag?": lambda c: "Here is the flag:"
+    }
 
-# Question map
-q_map = {
-    "Is it in Europe?": lambda c: f"No, it's in {c['region']}" if c["region"].lower() != "europe" else "Yes, it's in Europe",
-    "Is its population small, medium, or large?": lambda c: c["population"],
-    "Does it have a coastline?": lambda c: "Yes" if c["coastline"] else "No",
-    "Does it have more than 3 neighboring countries?": lambda c: "Yes" if c["neighbors"] > 3 else "No",
-    "Is it a UN member?": lambda c: "Yes" if c["un"] else "No",
-    "What is the country's capital city?": lambda c: c["capital"],
-    "What is the country's FIFA code?": lambda c: c["fifa"],
-    "What is the flag?": lambda c: "Here is the flag:"
-}
+    available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-# Selectable questions
-available = list(q for q in q_map if q not in st.session_state.asked_questions)
+    if st.session_state.selected_question not in available:
+        st.session_state.selected_question = available[0] if available else None
 
-# Show dropdown
-selected_question = st.selectbox("❓ Choose a question:", available)
+    selected_question = st.selectbox("❓ Choose a question:", available, index=available.index(st.session_state.selected_question))
 
-# When clicked, just save the selected question and rerun
-if st.button("Submit Question"):
-    st.session_state.pending_question = selected_question
-    st.experimental_rerun()  # force rerun before list changes
+    if st.button("Submit Question"):
+        st.session_state.pending_question = selected_question
+        st.session_state.selected_question = selected_question
+        st.experimental_rerun()
 
-# On rerun: check if a question is pending, and handle it
-if st.session_state.pending_question:
-    q = st.session_state.pending_question
-    answer = q_map[q](st.session_state.secret)
-    st.session_state.answers.append((q, answer))
-    st.session_state.asked_questions.append(q)
-    st.session_state.points -= 2
-    st.session_state.pending_question = None  # clear
-
+    if st.session_state.pending_question:
+        q = st.session_state.pending_question
+        answer = q_map[q](st.session_state.secret)
+        st.session_state.answers.append((q, answer))
+        st.session_state.asked_questions.append(q)
+        st.session_state.points -= 2
+        st.session_state.pending_question = None
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
