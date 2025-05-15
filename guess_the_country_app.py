@@ -188,22 +188,16 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    if "selected_question" not in st.session_state:
-        st.session_state.selected_question = available[0] if available else None
-    elif st.session_state.selected_question not in available:
-        st.session_state.selected_question = available[0] if available else None
-
     if available:
         with st.form("question_form"):
             selected = st.selectbox(
                 "❓ Choose a question:",
                 options=available,
-                index=available.index(st.session_state.selected_question) if st.session_state.selected_question in available else 0
+                key="selected_question"
             )
             submitted = st.form_submit_button("Submit Question")
 
         if submitted:
-            st.session_state.selected_question = selected  # Speichere Auswahl!
             answer = q_map[selected](st.session_state.secret)
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
@@ -317,6 +311,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
