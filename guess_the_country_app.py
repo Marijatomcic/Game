@@ -221,9 +221,9 @@ if st.session_state.game_started:
         st.session_state.asked_questions.append(selected)
         st.session_state.points -= 2
 
-        # Update selected_question to a valid next question or empty string
         new_available = [q for q in available_questions if q != selected]
-        if new_available:
+
+        if len(new_available) > 0:
             st.session_state.selected_question = new_available[0]
         else:
             st.session_state.selected_question = ""
@@ -337,6 +337,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
