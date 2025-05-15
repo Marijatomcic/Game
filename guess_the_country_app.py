@@ -188,7 +188,12 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # ✅ FIXED: This form guarantees the question selection is submitted correctly
+    # ✅ Fix: Preserve selected_question correctly
+    if "selected_question" not in st.session_state:
+        st.session_state.selected_question = available[0] if available else None
+    elif st.session_state.selected_question not in available:
+        st.session_state.selected_question = available[0] if available else None
+
     if available:
         with st.form("question_form"):
             selected = st.selectbox("❓ Choose a question:", options=available, key="selected_question")
@@ -197,8 +202,7 @@ if st.session_state.game_started:
         if submitted:
             answer = q_map[selected](st.session_state.secret)
             st.session_state.answers.append((selected, answer))
-            if selected != "What is the flag?":
-                st.session_state.asked_questions.append(selected)
+            st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
@@ -309,6 +313,8 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
+    
 
 
 
