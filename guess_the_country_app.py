@@ -177,7 +177,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
 # 🔄 Game logic block
 if st.session_state.game_started:
 
-# End the game immediately if points are zero or below
+    # End the game immediately if points are zero or below
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
         st.session_state.game_started = False
@@ -196,13 +196,25 @@ if st.session_state.game_started:
     }
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
+
+    # Initialize selected_question only once
+    if "selected_question" not in st.session_state and available:
+        st.session_state.selected_question = available[0]
+
     if available:
-        question = st.selectbox("❓ Choose a question:", available)
+        st.selectbox("❓ Choose a question:", available, key="selected_question")
+
         if st.button("Submit Question"):
+            question = st.session_state.selected_question
             answer = q_map[question](st.session_state.secret)
             st.session_state.answers.append((question, answer))
             st.session_state.asked_questions.append(question)
             st.session_state.points -= 2
+
+            # Optional: update dropdown to next remaining question
+            remaining = [q for q in available if q != question]
+            if remaining:
+                st.session_state.selected_question = remaining[0]
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
