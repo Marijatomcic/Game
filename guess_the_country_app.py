@@ -111,6 +111,9 @@ if "game_started" not in st.session_state:
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
+    st.session_state.pending_question = None
+    st.session_state.selected_question = None  # ✅ Add this here
+
 
 st.markdown("## 🌍 Guess the Country Game")
 
