@@ -110,6 +110,10 @@ if "game_started" not in st.session_state:
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
 
+# NEW: Initialize dropdown state once
+if "selected_question" not in st.session_state:
+    st.session_state.selected_question = None
+
 st.markdown("## 🌍 Guess the Country Game")
 
 st.markdown("""
@@ -189,16 +193,19 @@ if st.session_state.game_started:
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
     if available:
-        selected_question = st.selectbox(
+        selected = st.selectbox(
             "❓ Choose a question:",
             options=available,
-            key="selected_question"
+            key="selectbox_key"
         )
 
+        # Save the current selection into session state
+        st.session_state.selected_question = selected
+
         if st.button("Submit Question"):
-            answer = q_map[selected_question](st.session_state.secret)
-            st.session_state.answers.append((selected_question, answer))
-            st.session_state.asked_questions.append(selected_question)
+            answer = q_map[selected](st.session_state.secret)
+            st.session_state.answers.append((selected, answer))
+            st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
@@ -309,6 +316,7 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
 
 
 
