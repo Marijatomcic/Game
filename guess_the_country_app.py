@@ -78,6 +78,7 @@ st.markdown("""
         border-radius: 8px;
         padding: 0.5em;
     }
+
     </style>
 """, unsafe_allow_html=True)
 
@@ -109,35 +110,9 @@ if "game_started" not in st.session_state:
     st.session_state.answers = []
     st.session_state.asked_questions = []
     st.session_state.leaderboard = []
-
-# Init selected_question for dropdown persistence
-if "selected_question" not in st.session_state:
     st.session_state.selected_question = None
 
 st.markdown("## 🌍 Guess the Country Game")
-
-st.markdown("""
-<div style="
-    background-color: #fdf3c3;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 1px solid #f1e3a3;
-    margin-bottom: 2rem;
-">
-<h4>🧠 Game Instructions — powered by AI</h4>
-<p>Welcome to <strong>Guess the Country!</strong> 🌍<br>
-Each round, a secret country is selected and enriched by <strong>AI-generated cultural insights</strong>.</p>
-<ul>
-  <li>🔍 Ask up to <strong>8 predefined questions</strong>, all answered intelligently by AI</li>
-  <li>🎌 One reveals the country's flag (via AI logic)</li>
-  <li>❌ Every time you guess wrong, AI gives you a new cultural hint</li>
-  <li>🍽️ Hints include iconic <strong>foods, famous landmarks, or festivals</strong></li>
-  <li>🧠 Everything adapts to your selected difficulty</li>
-</ul>
-<p>The fewer questions and hints you use, the higher your final score.<br>
-Ready to test your global knowledge — and outsmart the AI?</p>
-</div>
-""", unsafe_allow_html=True)
 
 difficulty = st.selectbox("🔍 Select difficulty", ["easy", "medium", "hard"])
 
@@ -172,7 +147,7 @@ if st.button("🎮 Start Game") or st.session_state.get("replay_requested", Fals
     st.session_state.game_started = True
     st.success("New country loaded!")
 
-# 🔄 Game logic
+# 🔄 Game logic block
 if st.session_state.game_started:
     if st.session_state.points <= 0:
         st.error(f"😢 You're out of points! The country was **{st.session_state.secret['name']}**")
@@ -192,13 +167,16 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
-    # Handle invalid state if selected question no longer available
     if st.session_state.selected_question not in available and available:
         st.session_state.selected_question = available[0]
 
     if available:
         with st.form("question_form"):
-            selected = st.selectbox("❓ Choose a question:", options=available, key="selected_question")
+            selected = st.selectbox(
+                "❓ Choose a question:",
+                options=available,
+                key="selected_question"
+            )
             submitted = st.form_submit_button("Submit Question")
 
         if submitted:
@@ -206,8 +184,10 @@ if st.session_state.game_started:
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
             st.session_state.points -= 2
-            # Optional: Reset selection after each submit
-            st.session_state.selected_question = None
+
+            remaining = [q for q in q_map if q not in st.session_state.asked_questions]
+            if remaining:
+                st.session_state.selected_question = remaining[0]
 
     for q, a in st.session_state.answers:
         st.markdown(f"<div class='custom-answer-box'><strong>{q}</strong><br>{a}</div>", unsafe_allow_html=True)
@@ -317,6 +297,8 @@ if st.session_state.leaderboard:
     st.markdown("### 🏆 Leaderboard")
     for i, (name, score) in enumerate(st.session_state.leaderboard, 1):
         st.markdown(f"**{i}. {name}** — {score} points")
+
+
 
 
 
