@@ -188,15 +188,17 @@ if st.session_state.game_started:
 
     available = [q for q in q_map if q not in st.session_state.asked_questions]
 
+    # 🧠 Fix: Use session state to preserve selection and allow any question anytime
     if available:
         with st.form("question_form"):
             selected = st.selectbox(
                 "❓ Choose a question:",
-                options=available
+                options=available,
+                key="selected_question"
             )
             submitted = st.form_submit_button("Submit Question")
 
-        if submitted:
+        if submitted and selected not in st.session_state.asked_questions:
             answer = q_map[selected](st.session_state.secret)
             st.session_state.answers.append((selected, answer))
             st.session_state.asked_questions.append(selected)
