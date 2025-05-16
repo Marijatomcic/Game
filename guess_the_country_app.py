@@ -198,10 +198,14 @@ if st.session_state.game_started:
     available = [q for q in q_map if q not in st.session_state.asked_questions]
     if available:
         question = st.selectbox("❓ Choose a question:", available)
-        if st.button("Submit Question"):
+        def update_available_answers(question):
+            st.session_state.asked_questions.append(question)
             answer = q_map[question](st.session_state.secret)
             st.session_state.answers.append((question, answer))
-            st.session_state.asked_questions.append(question)
+        if st.button("Submit Question",on_click=update_available_answers, args=(question,)):
+            #answer = q_map[question](st.session_state.secret)
+            #st.session_state.answers.append((question, answer))
+            #st.session_state.asked_questions.append(question)
             st.session_state.points -= 2
 
     for q, a in st.session_state.answers:
